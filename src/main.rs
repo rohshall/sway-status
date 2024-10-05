@@ -1,65 +1,44 @@
 use std::env;
 use std::fs;
 use std::thread;
-use std::time;
-use std::io::{self, Write};
+use std::time::{Duration, Instant};
+use std::path::PathBuf;
+
+
+const POLL_DURATION: Duration = Duration::from_secs(1);
+const BATT_UPDATE_INTERVAL: u64 = 30;
 
 fn main() {
-    let mut args: Vec<String> = env::args().collect();
-    let batteries: Vec<String> = args.drain(1..).collect();
+    let battery: String = env::args().nth(1).expect("battery ID not provided");
 
-    let mut battery_infos = update_battery_info(batteries.clone());
+    let mut battery_info = update_battery_info(&battery);
 
+    let start = Instant::now();
     loop {
-        if chrono::Local::now().timestamp() % 30 == 0 {
-            battery_infos = update_battery_info(batteries.clone());
+        let duration = start.elapsed().as_secs();
+        if duration % BATT_UPDATE_INTERVAL == 0 {
+            battery_info = update_battery_info(&battery);
         }
-        let datetime = update_datetime_info();
+        let datetime = chrono::Local::now().to_rfc2822();
 
-        println!("{0} | {1}", battery_infos, datetime);
-        io::stdout().flush().unwrap();
+        println!("{0} | {1}", battery_info, datetime);
 
-        let pause = time::Duration::from_secs(1);
-        thread::sleep(pause);
+        thread::sleep(POLL_DURATION);
     }
 }
 
-fn update_datetime_info() -> String {
-    let now = chrono::Local::now();
-    return now.format("%d %m %Y %H:%M:%S").to_string();
-}
+fn update_battery_info(battery: &String) -> String {
+    let mut path = PathBuf::from("/sys/class/power_supply");
+    path.push(battery);
+    let status = fs::read_to_string(path.join("status")).expect("Failed to read battery status");
+    let status = status.trim();
+    let charge_full = fs::read_to_string(path.join("charge_full")).expect("Failed to read battery charge_full");
+    let charge_now = fs::read_to_string(path.join("charge_now")).expect("Failed to read battery charge_now");
+    let charge_full: u64 = charge_full.trim().parse().expect("Not a valid charge_full value");
+    let charge_now: u64 = charge_now.trim().parse().expect("Not a valid charge_now value");
+    let charge_percentage = (charge_now * 100) / charge_full;
 
-fn update_battery_info(batteries: Vec<String>) -> String {
-    let mut battery_infos = String::new();
-    
-    for battery in batteries {
-        let path = format!("/sys/class/power_supply/{0}", battery);
-        let battery_info = build_battery_info(&path);
-
-        if !battery_infos.is_empty() {
-            battery_infos.push_str(" | ");
-        }
-        battery_infos.push_str(&battery_info);
-    }
-    return battery_infos;
-}
-
-fn build_battery_info(path: &str) -> String {
-    let manufacturer = read_info(path, "manufacturer");
-    let model_name = read_info(path, "model_name");  
-    let capacity = read_info(path, "capacity");
-
-    return format!("{0} {1}: {2}%", manufacturer, model_name, capacity);
-}
-
-fn read_info(path: &str, file: &str) -> String {
-    let filename = format!("{0}/{1}", path, file);
-    let error_message = format!("Unable to read battery {0}", file);
-
-    let mut data = fs::read_to_string(filename).expect(&error_message);
-    data.pop();
-    
-    return data;
+    return format!("{}: {}%", status, charge_percentage);
 }
 
 
