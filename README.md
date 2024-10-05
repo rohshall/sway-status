@@ -17,7 +17,7 @@ The Information shown includes:
 # Read `man 5 sway-bar` for more information about this section.
 bar {
     position bottom 
-    status_command /<some_dir>/sway_tray_status BAT0 BAT1
+    status_command /<some_dir>/sway_tray_status BAT0
     colors {
         statusline #ffffff
         background #323232
