@@ -18,7 +18,7 @@ fn main() {
         let current_local: DateTime<Local> = Local::now();
         let datetime = current_local.format("%a,%v %H:%M");
 
-        println!(" {} | {}", battery_info, datetime);
+        println!("{} | {}", battery_info, datetime);
 
         thread::sleep(POLL_DURATION);
     }
