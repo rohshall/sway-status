@@ -2,6 +2,7 @@ use std::env;
 use std::fs;
 use std::thread;
 use std::time::Duration;
+use std::collections::HashMap;
 use chrono::{DateTime, Local};
 use std::path::PathBuf;
 
@@ -16,34 +17,37 @@ fn main() {
     loop {
         let current_local: DateTime<Local> = Local::now();
         let datetime = current_local.format("%a,%v %H:%M");
-        let battery_status = get_battery_status(&path);
         let battery_charge_percentage = get_battery_charge_percentage(&path);
-        let battery_status = match battery_status.as_str() {
-            "full" => "󰂅 ",
-            "charging" => match battery_charge_percentage {
-                0..33 => "󰂆 ",
-                33..66 => "󱊥 ",
-                66..99 => "󱊦 ",
-                _ => "󰂑"
-            },
-            "discharging" => match battery_charge_percentage {
-                0..33 => "󱊡",
-                33..66 => "󱊢",
-                66..99 => "󱊣",
-                _ => "󰂑"
-            },
-            _ => "󰂑"
-        };
+        let battery_status = get_battery_status(&path, battery_charge_percentage);
+        let mem_info = get_mem_info();
+        let load_avg = get_load_avg();
 
-        println!("{} {}%     {}", battery_status, battery_charge_percentage, datetime);
+        println!("󰻠  {} {} {}  󰍛 {}/{}({}) GB   {} {}%     {}", load_avg[0], load_avg[1], load_avg[2], mem_info.get("MemAvailable").unwrap(), mem_info.get("MemTotal").unwrap(), mem_info.get("MemFree").unwrap(), battery_status, battery_charge_percentage, datetime);
 
         thread::sleep(POLL_DURATION);
     }
 }
 
-fn get_battery_status(path: &PathBuf) -> String {
+fn get_battery_status(path: &PathBuf, battery_charge_percentage: u64) -> String {
     let battery_status = fs::read_to_string(path.join("status")).expect("Failed to read battery status");
-    String::from(battery_status.trim().to_lowercase())
+    let battery_status = String::from(battery_status.trim().to_lowercase());
+    let battery_status = match battery_status.as_str() {
+        "full" => "󰂅 ",
+        "charging" => match battery_charge_percentage {
+            0..33 => "󰂆 ",
+            33..66 => "󱊥 ",
+            66..99 => "󱊦 ",
+            _ => "󰂑"
+        },
+        "discharging" => match battery_charge_percentage {
+            0..33 => "󱊡",
+            33..66 => "󱊢",
+            66..99 => "󱊣",
+            _ => "󰂑"
+        },
+        _ => "󰂑"
+    };
+    String::from(battery_status)
 }
 
 fn get_battery_charge_percentage(path: &PathBuf) -> u64 {
@@ -54,6 +58,27 @@ fn get_battery_charge_percentage(path: &PathBuf) -> u64 {
     (charge_now * 100) / charge_full
 }
 
+fn get_mem_info() -> HashMap<String, u64> {
+    let contents = std::fs::read_to_string("/proc/meminfo").expect("Could not read /proc/meminfo");
+    let mut meminfo = HashMap::new();
+    for line in contents.lines().take(3) {
+        let mut split_line = line.split_whitespace();
+        let label = split_line.next();
+        let value = split_line.next();
+        if value.is_some() && label.is_some() {
+            let label = label.unwrap().split(':').nth(0).unwrap();
+            let value = value.unwrap().parse::<u64>().ok().unwrap();
+            meminfo.insert(String::from(label), value/1000000);
+        }
+    }
+    meminfo
+}
 
-
+fn get_load_avg() -> Vec<f64> {
+    let contents = std::fs::read_to_string("/proc/loadavg").expect("Could not read /proc/loadavg");
+    contents.trim().split(' ')
+        .take(3)
+        .map(|val| val.parse::<f64>().unwrap())
+        .collect::<Vec<f64>>()
+}
 
