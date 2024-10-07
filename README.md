@@ -4,9 +4,12 @@ This is a helper program to show basic information in swaybar. See [Sway](https:
 
 The Information shown includes:
 
-- Battery Name
+- Load avg (avg number of jobs waiting) from /proc/loadavg
+- Memory available, total and free memory from /proc/meminfo.
 - Battery level in percent
 - Date and time
+
+It uses unicode characters to show symbols. So, make sure the swaybar is configured to display information using a nerd font. I recommend "RobotoMono Nerd Font Mono".
 
 ## Configuration
 
