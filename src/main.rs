@@ -35,7 +35,7 @@ fn main() {
             _ => "󰂑"
         };
 
-        println!("{} {}%  {}", battery_status, battery_charge_percentage, datetime);
+        println!(" {} {}%  {} ", battery_status, battery_charge_percentage, datetime);
 
         thread::sleep(POLL_DURATION);
     }
