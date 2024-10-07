@@ -11,14 +11,11 @@ const POLL_DURATION: Duration = Duration::from_secs(60);
 
 fn main() {
     let battery: String = env::args().nth(1).expect("battery ID not provided");
-    let path = format!("/sys/class/power_supply/{}", battery);
-    let path = PathBuf::from(path);
 
     loop {
         let current_local: DateTime<Local> = Local::now();
         let datetime = current_local.format("%a,%v %H:%M");
-        let battery_charge_percentage = get_battery_charge_percentage(&path);
-        let battery_status = get_battery_status(&path, battery_charge_percentage);
+        let (battery_status, battery_charge_percentage) = get_battery_info(&battery);
         let mem_info = get_mem_info();
         let load_avg = get_load_avg();
 
@@ -28,7 +25,14 @@ fn main() {
     }
 }
 
-fn get_battery_status(path: &PathBuf, battery_charge_percentage: u64) -> String {
+fn get_battery_info(battery: &String) -> (String, u64) {
+    let path = format!("/sys/class/power_supply/{}", battery);
+    let path = PathBuf::from(path);
+    let charge_full = fs::read_to_string(path.join("charge_full")).expect("Failed to read battery charge_full");
+    let charge_now = fs::read_to_string(path.join("charge_now")).expect("Failed to read battery charge_now");
+    let charge_full: u64 = charge_full.trim().parse().expect("Not a valid charge_full value");
+    let charge_now: u64 = charge_now.trim().parse().expect("Not a valid charge_now value");
+    let battery_charge_percentage = (charge_now * 100) / charge_full;
     let battery_status = fs::read_to_string(path.join("status")).expect("Failed to read battery status");
     let battery_status = String::from(battery_status.trim().to_lowercase());
     let battery_status = match battery_status.as_str() {
@@ -47,15 +51,7 @@ fn get_battery_status(path: &PathBuf, battery_charge_percentage: u64) -> String 
         },
         _ => "󰂑"
     };
-    String::from(battery_status)
-}
-
-fn get_battery_charge_percentage(path: &PathBuf) -> u64 {
-    let charge_full = fs::read_to_string(path.join("charge_full")).expect("Failed to read battery charge_full");
-    let charge_now = fs::read_to_string(path.join("charge_now")).expect("Failed to read battery charge_now");
-    let charge_full: u64 = charge_full.trim().parse().expect("Not a valid charge_full value");
-    let charge_now: u64 = charge_now.trim().parse().expect("Not a valid charge_now value");
-    (charge_now * 100) / charge_full
+    (String::from(battery_status), battery_charge_percentage)
 }
 
 fn get_mem_info() -> HashMap<String, u64> {
