@@ -19,11 +19,11 @@ fn main() {
         let battery_status = get_battery_status(&path);
         let battery_charge_percentage = get_battery_charge_percentage(&path);
         let battery_status = match battery_status.as_str() {
-            "full" => "󰂅",
+            "full" => "󰂅 ",
             "charging" => match battery_charge_percentage {
-                0..33 => "󰂆",
-                33..66 => "󱊥",
-                66..99 => "󱊦",
+                0..33 => "󰂆 ",
+                33..66 => "󱊥 ",
+                66..99 => "󱊦 ",
                 _ => "󰂑"
             },
             "discharging" => match battery_charge_percentage {
@@ -35,7 +35,7 @@ fn main() {
             _ => "󰂑"
         };
 
-        println!("{} {}%   {}", battery_status, battery_charge_percentage, datetime);
+        println!("{} {}%     {}", battery_status, battery_charge_percentage, datetime);
 
         thread::sleep(POLL_DURATION);
     }
