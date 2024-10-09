@@ -10,22 +10,26 @@ use std::path::PathBuf;
 const POLL_DURATION: Duration = Duration::from_secs(60);
 
 fn main() {
-    let battery: String = env::args().nth(1).expect("battery ID not provided");
-
+    let battery_id = env::args().nth(1).unwrap_or(String::from(""));
     loop {
         let current_local: DateTime<Local> = Local::now();
         let datetime = current_local.format("%a,%v %H:%M");
-        let (battery_status, battery_charge_percentage) = get_battery_info(&battery);
+
         let mem_info = get_mem_info();
         let load_avg = get_load_avg();
-
-        println!("󰻠  {} {} {}  󰍛 {}/{}({}) GB   {} {}%     {}", load_avg[0], load_avg[1], load_avg[2], mem_info.get("MemAvailable").unwrap(), mem_info.get("MemTotal").unwrap(), mem_info.get("MemFree").unwrap(), battery_status, battery_charge_percentage, datetime);
-
+        // If battery ID is provided, show its status.
+        if battery_id.is_empty() {
+            println!("󰻠  {} {} {}  󰍛 {}/{}({}) GB     {}", load_avg[0], load_avg[1], load_avg[2], mem_info.get("MemAvailable").unwrap(), mem_info.get("MemTotal").unwrap(), mem_info.get("MemFree").unwrap(), datetime);
+        } else {
+            let (battery_status, battery_charge_percentage) = get_battery_info(&battery_id);
+            println!("󰻠  {} {} {}  󰍛 {}/{}({}) GB   {} {}%     {}", load_avg[0], load_avg[1], load_avg[2], mem_info.get("MemAvailable").unwrap(), mem_info.get("MemTotal").unwrap(), mem_info.get("MemFree").unwrap(), battery_status, battery_charge_percentage, datetime);
+        }
+        // sleep
         thread::sleep(POLL_DURATION);
     }
 }
 
-fn get_battery_info(battery: &String) -> (String, u64) {
+fn get_battery_info(battery: &str) -> (String, u64) {
     let path = format!("/sys/class/power_supply/{}", battery);
     let path = PathBuf::from(path);
     let charge_full = fs::read_to_string(path.join("charge_full")).expect("Failed to read battery charge_full");

@@ -6,7 +6,7 @@ The Information shown includes:
 
 - Load avg (avg number of jobs waiting) from /proc/loadavg
 - Memory available, total and free memory from /proc/meminfo.
-- Battery level in percent
+- Battery level in percent, if battery_id is provided.
 - Date and time
 
 It uses unicode characters to show symbols. So, make sure the swaybar is configured to display information using a nerd font. I recommend "RobotoMono Nerd Font Mono".
