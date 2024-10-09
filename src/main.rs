@@ -7,7 +7,7 @@ use chrono::{DateTime, Local};
 use std::path::PathBuf;
 
 
-const POLL_DURATION: Duration = Duration::from_secs(60);
+const POLL_DURATION: Duration = Duration::from_secs(10);
 
 fn main() {
     let battery_id = env::args().nth(1).unwrap_or(String::from(""));
@@ -19,10 +19,10 @@ fn main() {
         let load_avg = get_load_avg();
         // If battery ID is provided, show its status.
         if battery_id.is_empty() {
-            println!("󰻠  {} {} {}  󰍛 {}/{}({}) GB     {}", load_avg[0], load_avg[1], load_avg[2], mem_info.get("MemAvailable").unwrap(), mem_info.get("MemTotal").unwrap(), mem_info.get("MemFree").unwrap(), datetime);
+            println!("󰻠  {:.2} {:.2} {:.2}  󰍛 {}/{}({}) GB     {}", load_avg[0], load_avg[1], load_avg[2], mem_info.get("MemAvailable").unwrap(), mem_info.get("MemTotal").unwrap(), mem_info.get("MemFree").unwrap(), datetime);
         } else {
             let (battery_status, battery_charge_percentage) = get_battery_info(&battery_id);
-            println!("󰻠  {} {} {}  󰍛 {}/{}({}) GB   {} {}%     {}", load_avg[0], load_avg[1], load_avg[2], mem_info.get("MemAvailable").unwrap(), mem_info.get("MemTotal").unwrap(), mem_info.get("MemFree").unwrap(), battery_status, battery_charge_percentage, datetime);
+            println!("󰻠  {:.2} {:.2} {:.2}  󰍛 {}/{}({}) GB   {} {}%     {}", load_avg[0], load_avg[1], load_avg[2], mem_info.get("MemAvailable").unwrap(), mem_info.get("MemTotal").unwrap(), mem_info.get("MemFree").unwrap(), battery_status, battery_charge_percentage, datetime);
         }
         // sleep
         thread::sleep(POLL_DURATION);
