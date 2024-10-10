@@ -1,6 +1,7 @@
 use std::env;
 use std::fs;
 use std::thread;
+use std::io::{stdout, Write};
 use std::time::Duration;
 use std::collections::HashMap;
 use chrono::{DateTime, Local};
@@ -19,8 +20,8 @@ fn main() {
             print_battery_info(&battery_id);
         }
         print_datetime();
-        // Indicate the end of line
-        println!();
+        // Flush the output
+        stdout().flush().unwrap();
         // sleep
         thread::sleep(POLL_DURATION);
     }
@@ -28,11 +29,10 @@ fn main() {
 
 fn print_load_avg() {
     let contents = std::fs::read_to_string("/proc/loadavg").expect("Could not read /proc/loadavg");
-    let load_avg = contents.trim().split(' ')
+    let load_avg: Vec<&str> = contents.trim().split(' ')
         .take(3)
-        .map(|val| val.parse::<f64>().unwrap())
-        .collect::<Vec<f64>>();
-    print!("󰻠  {:.2} {:.2} {:.2} ", load_avg[0], load_avg[1], load_avg[2]);
+        .collect();
+    print!("󰻠  {} {} {} ", load_avg[0], load_avg[1], load_avg[2]);
 }
 
 fn print_mem_info() {
@@ -83,6 +83,6 @@ fn print_battery_info(battery: &str) {
         },
         _ => "󰂑"
     };
-    print!("{} {} ", battery_status, battery_charge_percentage);
+    print!("{} {}% ", battery_status, battery_charge_percentage);
 }
 

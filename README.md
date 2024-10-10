@@ -1,8 +1,8 @@
-# Sway Tray Status
+# Sway Status
 
 This is a helper program to show basic information in swaybar. See [Sway](https://github.com/swaywm/sway) a Wayland Compositor similar to i3 for more information.
 
-The Information shown includes:
+The information shown includes:
 
 - Load avg (avg number of jobs waiting) from /proc/loadavg
 - Memory available, total and free memory from /proc/meminfo.
@@ -20,7 +20,7 @@ It uses unicode characters to show symbols. So, make sure the swaybar is configu
 # Read `man 5 sway-bar` for more information about this section.
 bar {
     position bottom 
-    status_command /<some_dir>/sway_tray_status BAT0
+    status_command /<some_dir>/sway_status BAT0
     colors {
         statusline #ffffff
         background #323232
